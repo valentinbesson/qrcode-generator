@@ -1,0 +1,356 @@
+/* Reset et styles de base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+                'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #262626;
+    font-size: 14px;
+    line-height: 1.5715;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+header {
+    margin-bottom: 24px;
+}
+
+header h1 {
+    color: #722ed1;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.main-content {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.left-panel {
+    flex: 1;
+    background: white;
+    border-radius: 6px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #d9d9d9;
+}
+
+.right-panel {
+    flex: 1;
+    background: white;
+    border-radius: 6px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #d9d9d9;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 400px;
+}
+
+.section {
+    margin-bottom: 32px;
+}
+
+.section:last-of-type {
+    margin-bottom: 24px;
+}
+
+.section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #262626;
+    margin-bottom: 16px;
+}
+
+/* Zone de saisie texte */
+#content {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    line-height: 1.4;
+    resize: vertical;
+    transition: all 0.3s;
+}
+
+#content:focus {
+    border-color: #722ed1;
+    box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.2);
+    outline: none;
+}
+
+/* Options de radio */
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.radio-option input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    cursor: pointer;
+    accent-color: #722ed1;
+}
+
+.radio-label {
+    color: #262626;
+    font-weight: 500;
+}
+
+.input-with-unit {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.input-with-unit input {
+    width: 80px;
+    padding: 4px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.input-with-unit input:focus {
+    border-color: #722ed1;
+    box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.2);
+    outline: none;
+}
+
+.input-with-unit input:disabled {
+    background-color: #f5f5f5;
+    color: #8c8c8c;
+    cursor: not-allowed;
+}
+
+.unit {
+    color: #8c8c8c;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.quartile-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.quartile-label {
+    color: #8c8c8c;
+}
+
+.quartile-value {
+    color: #262626;
+    font-weight: 500;
+}
+
+/* Options de format */
+.format-options {
+    display: flex;
+    gap: 24px;
+}
+
+/* Bouton de téléchargement */
+.download-btn {
+    width: 100%;
+    background: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+.download-btn:hover {
+    background: #40a9ff;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.download-btn:active {
+    background: #096dd9;
+}
+
+.download-icon {
+    font-size: 16px;
+}
+
+/* Zone de prévisualisation */
+.preview-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    flex: 1;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.qr-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    width: 100%;
+    background: #fafafa;
+    border: 2px dashed #d9d9d9;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+
+.qr-preview.has-qr {
+    background: white;
+    border: 1px solid #d9d9d9;
+}
+
+.qr-preview canvas,
+.qr-preview svg {
+    border-radius: 4px;
+}
+
+/* Avertissement de taille */
+.size-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff2e8;
+    border: 1px solid #ffbb96;
+    border-radius: 4px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.warning-text {
+    color: #ad4e00;
+    font-size: 13px;
+}
+
+.warning-text span {
+    font-weight: 600;
+}
+
+.warning-label {
+    color: #ff7a45;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: lowercase;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .container {
+        padding: 16px;
+    }
+    
+    .left-panel,
+    .right-panel {
+        padding: 16px;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .format-options {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+/* États spéciaux */
+.radio-option input[type="radio"]:checked + .radio-label {
+    color: #722ed1;
+    font-weight: 600;
+}
+
+/* Animation de loading */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #722ed1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Placeholder pour QR code */
+.qr-placeholder {
+    color: #8c8c8c;
+    font-size: 14px;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+/* Messages d'erreur */
+.error-message {
+    color: #ff4d4f;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Style pour les options désactivées */
+.radio-option input[type="radio"]:disabled + .radio-label {
+    color: #bfbfbf;
+    cursor: not-allowed;
+}
+
+.radio-option input[type="radio"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
