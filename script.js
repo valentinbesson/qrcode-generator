@@ -1,84 +1,64 @@
 // Configuration et variables globales
 let currentQRCode = null;
-let currentFormat = 'png';
+let currentFormat = 'svg';
 let currentOptions = {
-    type: 'size',
-    size: 120,
-    redundancy: 30,
+    redundancy: 15,
+    pixelsPerSquare: 3,
+    calculatedSize: 75,
     errorCorrectionLevel: 'M'
 };
 
 // Éléments DOM
 const contentTextarea = document.getElementById('content');
-const sizeInput = document.getElementById('size-input');
-const redundancyInput = document.getElementById('redundancy-input');
+const pixelSizeInput = document.getElementById('pixel-size-input');
+const redundancySlider = document.getElementById('redundancy-slider');
+const redundancyDisplay = document.getElementById('redundancy-display');
+const calculatedSizeDisplay = document.getElementById('calculated-size');
+const errorLevelDisplay = document.getElementById('error-level-display');
 const qrPreview = document.getElementById('qr-preview');
 const downloadBtn = document.getElementById('download-btn');
 const sizeWarning = document.getElementById('size-warning');
 const minSizeSpan = document.getElementById('min-size');
 
 // Options radio
-const optionTypeRadios = document.querySelectorAll('input[name="option-type"]');
 const formatRadios = document.querySelectorAll('input[name="format"]');
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
+    autoResizeTextarea(); // Initialise la taille du textarea
+    initializeApp(); // Initialisation complète
     generateQRCode();
-    updateUI();
 });
 
 // Configuration des écouteurs d'événements
 function setupEventListeners() {
-    // Textarea content
-    contentTextarea.addEventListener('input', debounce(generateQRCode, 500));
+    console.log('Setting up event listeners...'); // Debug
+    console.log('Redundancy slider found:', !!redundancySlider); // Debug
     
-    // Options radio
-    optionTypeRadios.forEach(radio => {
-        radio.addEventListener('change', handleOptionTypeChange);
-    });
+    // Textarea content
+    contentTextarea.addEventListener('input', debounce(calculateAndUpdateDisplay, 500));
+    contentTextarea.addEventListener('input', autoResizeTextarea);
     
     // Format radio
     formatRadios.forEach(radio => {
         radio.addEventListener('change', handleFormatChange);
     });
     
-    // Inputs numériques
-    sizeInput.addEventListener('input', debounce(handleSizeChange, 500));
-    redundancyInput.addEventListener('input', debounce(handleRedundancyChange, 500));
+    // Contrôles
+    pixelSizeInput.addEventListener('input', handlePixelSizeChange);
+    
+    // Slider de redondance
+    if (redundancySlider) {
+        console.log('Adding redundancy slider listeners'); // Debug
+        redundancySlider.addEventListener('input', handleRedundancyChange);
+        redundancySlider.addEventListener('change', handleRedundancyChange);
+    } else {
+        console.error('Redundancy slider not found!'); // Debug
+    }
     
     // Bouton de téléchargement
     downloadBtn.addEventListener('click', downloadQRCode);
-}
-
-// Gestion du changement de type d'option (taille/redondance)
-function handleOptionTypeChange(e) {
-    currentOptions.type = e.target.value;
-    
-    if (currentOptions.type === 'size') {
-        sizeInput.disabled = false;
-        redundancyInput.disabled = true;
-        currentOptions.size = parseInt(sizeInput.value);
-    } else {
-        sizeInput.disabled = true;
-        redundancyInput.disabled = false;
-        currentOptions.redundancy = parseInt(redundancyInput.value);
-        
-        // Mapper la redondance vers le niveau de correction d'erreur
-        const redundancy = currentOptions.redundancy;
-        if (redundancy <= 7) {
-            currentOptions.errorCorrectionLevel = 'L';
-        } else if (redundancy <= 15) {
-            currentOptions.errorCorrectionLevel = 'M';
-        } else if (redundancy <= 25) {
-            currentOptions.errorCorrectionLevel = 'Q';
-        } else {
-            currentOptions.errorCorrectionLevel = 'H';
-        }
-    }
-    
-    updateQuartileDisplay();
-    generateQRCode();
 }
 
 // Gestion du changement de format
@@ -86,60 +66,105 @@ function handleFormatChange(e) {
     currentFormat = e.target.value;
 }
 
-// Gestion du changement de taille
-function handleSizeChange(e) {
-    const size = parseInt(e.target.value);
-    if (size >= 50 && size <= 1000) {
-        currentOptions.size = size;
-        if (currentOptions.type === 'size') {
-            generateQRCode();
-        }
+// Gestion du changement de pixels par carré
+function handlePixelSizeChange(e) {
+    const pixelSize = parseInt(e.target.value);
+    if (pixelSize >= 1 && pixelSize <= 10) {
+        currentOptions.pixelsPerSquare = pixelSize;
+        calculateAndUpdateDisplay();
     }
 }
 
-// Gestion du changement de redondance
+// Gestion du changement de redondance via slider
 function handleRedundancyChange(e) {
     const redundancy = parseInt(e.target.value);
-    if (redundancy >= 1 && redundancy <= 100) {
-        currentOptions.redundancy = redundancy;
-        
-        // Mapper la redondance vers le niveau de correction d'erreur
-        if (redundancy <= 7) {
-            currentOptions.errorCorrectionLevel = 'L';
-        } else if (redundancy <= 15) {
-            currentOptions.errorCorrectionLevel = 'M';
-        } else if (redundancy <= 25) {
-            currentOptions.errorCorrectionLevel = 'Q';
-        } else {
-            currentOptions.errorCorrectionLevel = 'H';
-        }
-        
-        updateQuartileDisplay();
-        
-        if (currentOptions.type === 'redundancy') {
-            generateQRCode();
-        }
+    console.log('Redundancy slider changed to:', redundancy); // Debug
+    currentOptions.redundancy = redundancy;
+    
+    // Mapper la redondance vers le niveau de correction d'erreur
+    if (redundancy <= 7) {
+        currentOptions.errorCorrectionLevel = 'L';
+    } else if (redundancy <= 15) {
+        currentOptions.errorCorrectionLevel = 'M';
+    } else if (redundancy <= 25) {
+        currentOptions.errorCorrectionLevel = 'Q';
+    } else {
+        currentOptions.errorCorrectionLevel = 'H';
     }
+    
+    calculateAndUpdateDisplay();
 }
 
-// Mise à jour de l'affichage du quartile
-function updateQuartileDisplay() {
-    const quartileValue = document.querySelector('.quartile-value');
-    const redundancy = currentOptions.redundancy;
+// Fonction principale de calcul et mise à jour de l'affichage
+function calculateAndUpdateDisplay() {
+    const content = contentTextarea.value.trim();
     
-    let quartileText = '';
-    if (redundancy <= 7) {
-        quartileText = '~7%';
-    } else if (redundancy <= 15) {
-        quartileText = '~15%';
-    } else if (redundancy <= 25) {
-        quartileText = '~25%';
-    } else {
-        quartileText = '~30%';
+    // Calculer le nombre de modules nécessaires
+    const modules = estimateQRModules(content, currentOptions.errorCorrectionLevel);
+    
+    // Calculer la taille finale
+    currentOptions.calculatedSize = modules * currentOptions.pixelsPerSquare;
+    
+    // Mettre à jour l'affichage
+    if (redundancyDisplay) {
+        redundancyDisplay.textContent = currentOptions.redundancy + '%';
     }
     
-    quartileValue.textContent = quartileText;
+    if (calculatedSizeDisplay) {
+        calculatedSizeDisplay.textContent = `${currentOptions.calculatedSize} × ${currentOptions.calculatedSize} px`;
+    }
+    
+    if (errorLevelDisplay) {
+        errorLevelDisplay.textContent = `(${currentOptions.errorCorrectionLevel})`;
+    }
+    
+    console.log('Calculated size:', currentOptions.calculatedSize, 'px for', modules, 'modules at', currentOptions.pixelsPerSquare, 'px/square'); // Debug
+    
+    // Regénérer le QR code
+    generateQRCode();
 }
+
+// Calcul du nombre de modules (carrés) d'un QR code selon le contenu et niveau d'erreur
+function estimateQRModules(content, errorLevel) {
+    const length = content.length;
+    
+    // Estimation simplifiée basée sur la longueur du contenu et le niveau d'erreur
+    // Ces valeurs sont approximatives et basées sur les spécifications QR
+    let baseModules;
+    
+    if (length <= 25) baseModules = 21; // Version 1
+    else if (length <= 47) baseModules = 25; // Version 2
+    else if (length <= 77) baseModules = 29; // Version 3
+    else if (length <= 114) baseModules = 33; // Version 4
+    else if (length <= 154) baseModules = 37; // Version 5
+    else if (length <= 195) baseModules = 41; // Version 6
+    else if (length <= 224) baseModules = 45; // Version 7
+    else if (length <= 279) baseModules = 49; // Version 8
+    else if (length <= 335) baseModules = 53; // Version 9
+    else baseModules = 57; // Version 10+
+    
+    // Ajustement selon le niveau de correction d'erreur
+    // Note: Les niveaux QR standards vont jusqu'à H (30%), 
+    // mais on peut simuler des niveaux plus élevés pour l'estimation
+    const errorMultiplier = {
+        'L': 1.0,  // 7%
+        'M': 1.1,  // 15%
+        'Q': 1.2,  // 25%
+        'H': 1.3   // 30% et plus
+    };
+    
+    // Pour les redondances > 30%, on augmente légèrement le multiplicateur H
+    let multiplier = errorMultiplier[errorLevel] || 1.1;
+    if (errorLevel === 'H' && currentOptions.redundancy > 30) {
+        // Ajustement progressif pour les très hautes redondances
+        const extraRedundancy = currentOptions.redundancy - 30;
+        multiplier = 1.3 + (extraRedundancy * 0.01); // +1% par point de redondance
+    }
+    
+    return Math.ceil(baseModules * multiplier);
+}
+
+// Cette fonction n'est plus nécessaire avec la nouvelle logique
 
 // Génération du QR code via API
 function generateQRCode() {
@@ -155,10 +180,21 @@ function generateQRCode() {
     qrPreview.innerHTML = '<div class="qr-placeholder">Génération en cours...</div>';
     
     try {
-        const size = currentOptions.type === 'size' ? currentOptions.size : 200;
-        const errorCorrection = currentOptions.errorCorrectionLevel || 'M';
+        const size = currentOptions.calculatedSize;
+        const errorCorrection = currentOptions.errorCorrectionLevel;
+        
+        console.log('Generating QR code...', {
+            size: size,
+            errorLevel: errorCorrection,
+            redundancy: currentOptions.redundancy,
+            pixelsPerSquare: currentOptions.pixelsPerSquare
+        }); // Debug
+        
         const encodedContent = encodeURIComponent(content);
-        const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedContent}&ecc=${errorCorrection}`;
+        // Générer directement à la taille calculée
+        const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&format=png&data=${encodedContent}&ecc=${errorCorrection}&margin=0`;
+        
+        console.log('API URL:', apiUrl); // Debug
         
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -168,6 +204,14 @@ function generateQRCode() {
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
+            
+            // Désactiver le lissage pour garder les pixels nets
+            ctx.imageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
+            
+            // Dessiner l'image à la taille exacte
             ctx.drawImage(img, 0, 0, size, size);
             
             qrPreview.innerHTML = '';
@@ -175,7 +219,7 @@ function generateQRCode() {
             qrPreview.classList.add('has-qr');
             currentQRCode = canvas;
             
-            checkMinimumSize(content);
+            console.log(`QR code generated - Final size: ${canvas.width}x${canvas.height}px`); // Debug
         };
         
         img.onerror = function() {
@@ -191,18 +235,7 @@ function generateQRCode() {
     }
 }
 
-// Vérification de la taille minimum
-function checkMinimumSize(content) {
-    // Estimer la taille minimum basée sur la longueur du contenu
-    let estimatedMinSize = Math.max(97, Math.ceil(content.length / 4) + 50);
-    
-    if (currentOptions.type === 'size' && currentOptions.size < estimatedMinSize) {
-        minSizeSpan.textContent = estimatedMinSize;
-        sizeWarning.style.display = 'flex';
-    } else {
-        sizeWarning.style.display = 'none';
-    }
-}
+// Plus besoin de vérification de taille minimum avec la nouvelle logique
 
 // Téléchargement du QR code
 function downloadQRCode() {
@@ -236,47 +269,39 @@ function downloadAsPNG() {
 
 // Téléchargement en SVG
 function downloadAsSVG() {
-    const content = contentTextarea.value.trim();
-    const size = currentOptions.type === 'size' ? currentOptions.size : 200;
-    const errorCorrection = currentOptions.errorCorrectionLevel || 'M';
-    const encodedContent = encodeURIComponent(content);
-    
-    // Utiliser l'API pour générer un SVG
-    const svgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&format=svg&data=${encodedContent}&ecc=${errorCorrection}`;
-    
-    fetch(svgUrl)
-        .then(response => response.text())
-        .then(svgContent => {
-            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.download = 'qrcode.svg';
-            link.href = url;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            URL.revokeObjectURL(url);
-        })
-        .catch(error => {
-            alert('Erreur lors du téléchargement du fichier SVG');
-        });
-}
-
-// Mise à jour de l'interface utilisateur
-function updateUI() {
-    // Mise à jour des états des inputs
-    if (currentOptions.type === 'size') {
-        sizeInput.disabled = false;
-        redundancyInput.disabled = true;
-    } else {
-        sizeInput.disabled = true;
-        redundancyInput.disabled = false;
+    // Utiliser le canvas existant pour créer un SVG à la taille exacte
+    if (!currentQRCode) {
+        alert('Aucun QR code à télécharger');
+        return;
     }
     
-    updateQuartileDisplay();
+    const size = currentOptions.calculatedSize;
+    const canvas = currentQRCode;
+    
+    console.log(`Creating SVG from canvas - Target size: ${size}x${size}px, Canvas size: ${canvas.width}x${canvas.height}px`); // Debug
+    
+    // Créer un SVG à partir des données du canvas
+    const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <image x="0" y="0" width="${size}" height="${size}" xlink:href="${canvas.toDataURL('image/png')}" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges;"/>
+</svg>`;
+    
+    console.log(`SVG created with exact dimensions: ${size}x${size}px`); // Debug
+    
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.download = 'qrcode.svg';
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
 }
+
+// Plus besoin de updateUI avec la nouvelle logique simplifiée
 
 // Fonction de debounce pour limiter les appels
 function debounce(func, wait) {
@@ -301,4 +326,46 @@ function validateInput(input, min, max) {
         input.classList.remove('error');
         return true;
     }
+}
+
+// Fonction pour redimensionner automatiquement le textarea
+function autoResizeTextarea() {
+    const textarea = contentTextarea;
+    // Reset la hauteur pour calculer la nouvelle hauteur nécessaire
+    textarea.style.height = 'auto';
+    
+    // Calcule la nouvelle hauteur basée sur le contenu
+    const newHeight = Math.min(textarea.scrollHeight, 400); // Max 400px comme défini dans le CSS
+    textarea.style.height = Math.max(newHeight, 120) + 'px'; // Min 120px
+}
+
+// Fonction d'initialisation complète
+function initializeApp() {
+    console.log('Initializing app...'); // Debug
+    
+    // Vérifier que tous les éléments DOM sont présents
+    if (!redundancySlider || !pixelSizeInput) {
+        console.error('Required elements not found in DOM!');
+        return;
+    }
+    
+    // Initialiser les valeurs par défaut  
+    currentOptions.redundancy = parseInt(redundancySlider.value) || 15;
+    currentOptions.pixelsPerSquare = parseInt(pixelSizeInput.value) || 3;
+    
+    // Mapper la redondance vers le niveau d'erreur
+    if (currentOptions.redundancy <= 7) {
+        currentOptions.errorCorrectionLevel = 'L';
+    } else if (currentOptions.redundancy <= 15) {
+        currentOptions.errorCorrectionLevel = 'M';
+    } else if (currentOptions.redundancy <= 25) {
+        currentOptions.errorCorrectionLevel = 'Q';
+    } else {
+        currentOptions.errorCorrectionLevel = 'H';
+    }
+    
+    // Calculer et afficher la taille initiale
+    calculateAndUpdateDisplay();
+    
+    console.log('App initialized with options:', currentOptions); // Debug
 }

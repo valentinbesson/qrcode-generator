@@ -16,16 +16,7 @@
             <div class="left-panel">
                 <div class="section">
                     <h3>Content</h3>
-                    <textarea id="content" placeholder="Entrez votre texte ici...">BEGIN:VCARD
-VERSION:3.0
-N:Besson;Valentin;;;
-FN:Valentin Besson
-TITLE:UX / Product designer
-EMAIL;TYPE=PREF;INTERNET:vbe@valentin-besson.com
-TEL;TYPE=cell:+33 6 64 13 47 10
-ADR;TYPE=home:;;3 Allée Alexandre Bachelet;Saint-Ouen;93400;France
-URL:https://valentinbesson.com
-END:VCARD</textarea>
+                    <textarea id="content" placeholder="Entrez votre texte ici... (ex: URL, texte, vCard, etc.)"></textarea>
                 </div>
             </div>
             
@@ -34,29 +25,27 @@ END:VCARD</textarea>
                     <h3>Options</h3>
                     
                     <div class="option-group">
-                        <div class="radio-group">
-                            <label class="radio-option">
-                                <input type="radio" name="option-type" value="size" checked>
-                                <span class="radio-label">Size</span>
-                            </label>
-                            <div class="input-with-unit">
-                                <input type="number" id="size-input" value="120" min="50" max="1000">
+                        <div class="control-row">
+                            <label class="control-label">Redondance :</label>
+                            <div class="control-input">
+                                <input type="range" id="redundancy-slider" min="5" max="50" step="1" value="15">
+                                <span class="control-value" id="redundancy-display">15%</span>
+                                <span class="error-level" id="error-level-display">(M)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <label class="control-label">Pixels par carré :</label>
+                            <div class="control-input">
+                                <input type="number" id="pixel-size-input" value="3" min="1" max="10">
                                 <span class="unit">px</span>
                             </div>
                         </div>
                         
-                        <div class="radio-group">
-                            <label class="radio-option">
-                                <input type="radio" name="option-type" value="redundancy">
-                                <span class="radio-label">Redondance</span>
-                            </label>
-                            <div class="quartile-info">
-                                <span class="quartile-label">Quartile (Q) :</span>
-                                <span class="quartile-value">25%</span>
-                            </div>
-                            <div class="input-with-unit">
-                                <input type="number" id="redundancy-input" value="30" min="1" max="100" disabled>
-                                <span class="unit">%</span>
+                        <div class="result-display">
+                            <div class="result-row">
+                                <span class="result-label">Taille calculée :</span>
+                                <span class="result-value" id="calculated-size">75 × 75 px</span>
                             </div>
                         </div>
                     </div>
@@ -76,11 +65,11 @@ END:VCARD</textarea>
                     <h3>Format</h3>
                     <div class="format-options">
                         <label class="radio-option">
-                            <input type="radio" name="format" value="svg">
+                            <input type="radio" name="format" value="svg" checked>
                             <span class="radio-label">svg</span>
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="format" value="png" checked>
+                            <input type="radio" name="format" value="png">
                             <span class="radio-label">png</span>
                         </label>
                     </div>
