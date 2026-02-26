@@ -1,8 +1,17 @@
+// Clés localStorage
+const LS_KEYS = {
+    contentType:    'qrgen_content_type',
+    errorLevel:     'qrgen_error_level',
+    pixelSize:      'qrgen_pixel_size',
+    contentLibre:   'qrgen_content_libre',
+    contentVcard:   'qrgen_content_vcard'
+};
+
 // Configuration et variables globales
 let currentQRCode = null;
 let currentFormat = 'svg';
 let currentOptions = {
-    errorCorrectionLevel: 'M', // L, M, Q, H
+    errorCorrectionLevel: 'M',
     pixelsPerSquare: 3,
     calculatedSize: 75
 };
@@ -35,28 +44,77 @@ URL:https://url
 END:VCARD`;
 
 // Éléments DOM
-const contentTextarea = document.getElementById('content');
-const pixelSizeInput = document.getElementById('pixel-size-input');
-const redundancySlider = document.getElementById('redundancy-slider');
+const contentTextarea   = document.getElementById('content');
+const pixelSizeInput    = document.getElementById('pixel-size-input');
+const redundancySlider  = document.getElementById('redundancy-slider');
 const redundancyDisplay = document.getElementById('redundancy-display');
 const calculatedSizeDisplay = document.getElementById('calculated-size');
-const qrPreview = document.getElementById('qr-preview');
-const downloadBtn = document.getElementById('download-btn');
-const formatRadios = document.querySelectorAll('input[name="format"]');
+const qrPreview         = document.getElementById('qr-preview');
+const downloadBtn       = document.getElementById('download-btn');
+const resetBtn          = document.getElementById('reset-btn');
+const formatRadios      = document.querySelectorAll('input[name="format"]');
 const contentTypeRadios = document.querySelectorAll('input[name="content-type"]');
 
-// Initialisation
+// ─── localStorage helpers ────────────────────────────────────────────────────
+function savePrefs() {
+    const contentType = document.querySelector('input[name="content-type"]:checked')?.value || 'libre';
+    localStorage.setItem(LS_KEYS.contentType, contentType);
+    localStorage.setItem(LS_KEYS.errorLevel,  redundancySlider.value);
+    localStorage.setItem(LS_KEYS.pixelSize,   pixelSizeInput.value);
+    // Sauvegarder dans la clé correspondant au type courant
+    if (contentType === 'vcard') {
+        localStorage.setItem(LS_KEYS.contentVcard, contentTextarea.value);
+    } else {
+        localStorage.setItem(LS_KEYS.contentLibre, contentTextarea.value);
+    }
+}
+
+function loadPrefs() {
+    const savedContentType = localStorage.getItem(LS_KEYS.contentType) || 'libre';
+    const savedErrorLevel  = localStorage.getItem(LS_KEYS.errorLevel)  ?? '1';
+    const savedPixelSize   = localStorage.getItem(LS_KEYS.pixelSize)   || '3';
+
+    // Contenu selon le type actif
+    const savedContent = savedContentType === 'vcard'
+        ? (localStorage.getItem(LS_KEYS.contentVcard) ?? VCARD_TEMPLATE)
+        : (localStorage.getItem(LS_KEYS.contentLibre) || '');
+
+    // Content type radio
+    contentTypeRadios.forEach(r => {
+        r.checked = r.value === savedContentType;
+    });
+
+    // Niveau de correction
+    redundancySlider.value = savedErrorLevel;
+    const level = ERROR_CORRECTION_LEVELS[parseInt(savedErrorLevel)] || ERROR_CORRECTION_LEVELS[1];
+    currentOptions.errorCorrectionLevel = level.qrCodeLevel;
+    redundancyDisplay.textContent = level.label;
+
+    // Pixel size
+    pixelSizeInput.value = savedPixelSize;
+    currentOptions.pixelsPerSquare = parseInt(savedPixelSize) || 3;
+
+    // Contenu textarea
+    contentTextarea.value = savedContent;
+
+    // Placeholder selon type
+    if (savedContentType === 'vcard') {
+        contentTextarea.placeholder = 'Template vCard - Modifiez les informations';
+    }
+}
+
+// ─── Initialisation ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
-    autoResizeTextarea();
     initializeApp();
+    autoResizeTextarea();
     generateQRCode();
 });
 
 // Configuration des écouteurs d'événements
 function setupEventListeners() {
     // Textarea content
-    contentTextarea.addEventListener('input', debounce(generateQRCode, 300));
+    contentTextarea.addEventListener('input', debounce(() => { savePrefs(); generateQRCode(); }, 300));
     contentTextarea.addEventListener('input', autoResizeTextarea);
     
     // Format radio
@@ -75,25 +133,47 @@ function setupEventListeners() {
     
     // Bouton de téléchargement
     downloadBtn.addEventListener('click', downloadQRCode);
+
+    // Bouton Reset
+    if (resetBtn) {
+        resetBtn.addEventListener('click', handleReset);
+    }
 }
 
 // Gestion du changement de type de contenu
 function handleContentTypeChange(e) {
-    const contentType = e.target.value;
-    
-    if (contentType === 'vcard') {
-        // Préremplir avec le template vCard
-        contentTextarea.value = VCARD_TEMPLATE;
+    const newType = e.target.value;
+
+    // Restaurer le contenu sauvegardé pour ce type
+    if (newType === 'vcard') {
+        const saved = localStorage.getItem(LS_KEYS.contentVcard);
+        contentTextarea.value = saved !== null ? saved : VCARD_TEMPLATE;
         contentTextarea.placeholder = 'Template vCard - Modifiez les informations';
     } else {
-        // Mode libre
-        if (contentTextarea.value === VCARD_TEMPLATE) {
-            contentTextarea.value = '';
-        }
+        const saved = localStorage.getItem(LS_KEYS.contentLibre);
+        contentTextarea.value = saved || '';
         contentTextarea.placeholder = 'Entrez votre texte ici... (ex: URL, texte, vCard, etc.)';
     }
-    
-    // Déclencher la génération du QR code
+
+    savePrefs();
+    autoResizeTextarea();
+    generateQRCode();
+}
+
+// Gestion du Clear
+function handleReset() {
+    const contentType = document.querySelector('input[name="content-type"]:checked')?.value || 'libre';
+
+    if (contentType === 'vcard') {
+        // vCard : remettre le template par défaut
+        contentTextarea.value = VCARD_TEMPLATE;
+        localStorage.setItem(LS_KEYS.contentVcard, VCARD_TEMPLATE);
+    } else {
+        // Libre : vider complètement
+        contentTextarea.value = '';
+        localStorage.setItem(LS_KEYS.contentLibre, '');
+    }
+
     autoResizeTextarea();
     generateQRCode();
 }
@@ -108,6 +188,7 @@ function handlePixelSizeChange(e) {
     const pixelSize = parseInt(e.target.value);
     if (pixelSize >= 1 && pixelSize <= 10) {
         currentOptions.pixelsPerSquare = pixelSize;
+        savePrefs();
         updateDisplay();
         generateQRCode();
     }
@@ -121,6 +202,7 @@ function handleRedundancyChange(e) {
     currentOptions.errorCorrectionLevel = level.qrCodeLevel;
     redundancyDisplay.textContent = level.label;
     
+    savePrefs();
     generateQRCode();
 }
 
@@ -323,14 +405,7 @@ function autoResizeTextarea() {
 
 // Fonction d'initialisation complète
 function initializeApp() {
-    // Initialiser les valeurs par défaut
-    const levelIndex = parseInt(redundancySlider.value) || 1;
-    const level = ERROR_CORRECTION_LEVELS[levelIndex];
-    
-    currentOptions.errorCorrectionLevel = level.qrCodeLevel;
-    currentOptions.pixelsPerSquare = parseInt(pixelSizeInput.value) || 3;
-    
-    redundancyDisplay.textContent = level.label;
-    
+    // Charger les préférences sauvegardées (ou valeurs par défaut)
+    loadPrefs();
     console.log('Application initialisée avec:', currentOptions);
 }

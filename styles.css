@@ -73,10 +73,39 @@ header h1 {
 
 /* Zone de saisie texte */
 /* Options de type de contenu */
+.content-type-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
 .content-type-options {
     display: flex;
     gap: 24px;
-    margin-bottom: 12px;
+}
+
+.reset-btn {
+    background: none;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #8c8c8c;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.reset-btn:hover {
+    border-color: #ff4d4f;
+    color: #ff4d4f;
+    background: #fff1f0;
+}
+
+.reset-btn:active {
+    background: #ffccc7;
 }
 
 #content {
@@ -442,6 +471,8 @@ header h1 {
     .left-panel,
     .right-panel {
         padding: 16px;
+        width: 100%;
+        flex: none;
     }
     
     .radio-group {
