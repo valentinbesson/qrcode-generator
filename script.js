@@ -9,7 +9,6 @@ const LS_KEYS = {
 
 // Configuration et variables globales
 let currentQRCode = null;
-let currentFormat = 'svg';
 let currentOptions = {
     errorCorrectionLevel: 'M',
     pixelsPerSquare: 3,
@@ -50,9 +49,9 @@ const redundancySlider  = document.getElementById('redundancy-slider');
 const redundancyDisplay = document.getElementById('redundancy-display');
 const calculatedSizeDisplay = document.getElementById('calculated-size');
 const qrPreview         = document.getElementById('qr-preview');
-const downloadBtn       = document.getElementById('download-btn');
+const downloadSvgBtn    = document.getElementById('download-svg-btn');
+const downloadPngBtn    = document.getElementById('download-png-btn');
 const resetBtn          = document.getElementById('reset-btn');
-const formatRadios      = document.querySelectorAll('input[name="format"]');
 const contentTypeRadios = document.querySelectorAll('input[name="content-type"]');
 
 // ─── localStorage helpers ────────────────────────────────────────────────────
@@ -117,11 +116,6 @@ function setupEventListeners() {
     contentTextarea.addEventListener('input', debounce(() => { savePrefs(); generateQRCode(); }, 300));
     contentTextarea.addEventListener('input', autoResizeTextarea);
     
-    // Format radio
-    formatRadios.forEach(radio => {
-        radio.addEventListener('change', handleFormatChange);
-    });
-    
     // Content type radio
     contentTypeRadios.forEach(radio => {
         radio.addEventListener('change', handleContentTypeChange);
@@ -131,10 +125,11 @@ function setupEventListeners() {
     pixelSizeInput.addEventListener('input', handlePixelSizeChange);
     redundancySlider.addEventListener('input', handleRedundancyChange);
     
-    // Bouton de téléchargement
-    downloadBtn.addEventListener('click', downloadQRCode);
+    // Boutons de téléchargement
+    if (downloadSvgBtn) downloadSvgBtn.addEventListener('click', downloadAsSVG);
+    if (downloadPngBtn) downloadPngBtn.addEventListener('click', downloadAsPNG);
 
-    // Bouton Reset
+    // Bouton Clear
     if (resetBtn) {
         resetBtn.addEventListener('click', handleReset);
     }
@@ -176,11 +171,6 @@ function handleReset() {
 
     autoResizeTextarea();
     generateQRCode();
-}
-
-// Gestion du changement de format
-function handleFormatChange(e) {
-    currentFormat = e.target.value;
 }
 
 // Gestion du changement de pixels par carré
@@ -283,26 +273,6 @@ function generateQRCode() {
         qrPreview.innerHTML = `<div class="qr-placeholder">Erreur lors de la génération<br><small>${error.message}</small></div>`;
         qrPreview.classList.remove('has-qr');
         currentQRCode = null;
-    }
-}
-
-// Téléchargement du QR code
-function downloadQRCode() {
-    if (!currentQRCode) {
-        alert('Aucun QR code à télécharger');
-        return;
-    }
-    
-    const content = contentTextarea.value.trim();
-    if (!content) {
-        alert('Veuillez entrer du contenu avant de télécharger');
-        return;
-    }
-    
-    if (currentFormat === 'png') {
-        downloadAsPNG();
-    } else {
-        downloadAsSVG();
     }
 }
 

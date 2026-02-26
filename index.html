@@ -11,13 +11,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>SVG - QRcode generator</h1>
+            <h1><img src="Images/favicon.ico.svg" alt="logo" class="header-logo">SVG - QRcode generator</h1>
         </header>
         
         <div class="main-content">
             <div class="left-panel">
                 <div class="section">
-                    <h3>Content</h3>
+                    <h3>Contenu</h3>
                     <div class="content-type-header">
                         <div class="content-type-options">
                             <label class="radio-option">
@@ -29,9 +29,9 @@
                                 <span class="radio-label">vCard</span>
                             </label>
                         </div>
-                        <button id="reset-btn" class="reset-btn" title="Vider le texte">✕ Clear</button>
+                        <button id="reset-btn" class="reset-btn" title="Vider le texte">✕ Reset</button>
                     </div>
-                    <textarea id="content" placeholder="Entrez votre texte ici... (ex: URL, texte, vCard, etc.)"></textarea>
+                    <textarea id="content" placeholder="Entrez votre texte ici... (ex: URL, e-mail, texte... )"></textarea>
                 </div>
             </div>
             
@@ -76,23 +76,12 @@
                 </div>
                 
                 <div class="section">
-                    <h3>Format</h3>
-                    <div class="format-options">
-                        <label class="radio-option">
-                            <input type="radio" name="format" value="svg" checked>
-                            <span class="radio-label">svg</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="format" value="png">
-                            <span class="radio-label">png</span>
-                        </label>
+                    <h3>Télécharger au format :</h3>
+                    <div class="download-actions">
+                        <button id="download-png-btn" class="download-btn download-btn--secondary">PNG</button>
+                        <button id="download-svg-btn" class="download-btn download-btn--primary">SVG</button>
                     </div>
                 </div>
-                
-                <button id="download-btn" class="download-btn">
-                    <span class="download-icon">✓</span>
-                    Download
-                </button>
             </div>
         </div>
     </div>
