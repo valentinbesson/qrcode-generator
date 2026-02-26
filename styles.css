@@ -72,6 +72,13 @@ header h1 {
 }
 
 /* Zone de saisie texte */
+/* Options de type de contenu */
+.content-type-options {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 12px;
+}
+
 #content {
     width: 100%;
     min-height: 120px;

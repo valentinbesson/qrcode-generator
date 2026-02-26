@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVG - QRcode generator</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -16,6 +17,16 @@
             <div class="left-panel">
                 <div class="section">
                     <h3>Content</h3>
+                    <div class="content-type-options">
+                        <label class="radio-option">
+                            <input type="radio" name="content-type" value="libre" checked>
+                            <span class="radio-label">Libre</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="content-type" value="vcard">
+                            <span class="radio-label">vCard</span>
+                        </label>
+                    </div>
                     <textarea id="content" placeholder="Entrez votre texte ici... (ex: URL, texte, vCard, etc.)"></textarea>
                 </div>
             </div>
@@ -26,11 +37,10 @@
                     
                     <div class="option-group">
                         <div class="control-row">
-                            <label class="control-label">Redondance :</label>
+                            <label class="control-label">Niveau de correction :</label>
                             <div class="control-input">
-                                <input type="range" id="redundancy-slider" min="1" max="60" step="1" value="15">
-                                <span class="control-value" id="redundancy-display">15%</span>
-                                <span class="error-level" id="error-level-display">(M)</span>
+                                <input type="range" id="redundancy-slider" min="0" max="3" step="1" value="1">
+                                <span class="control-value" id="redundancy-display">M (~15%)</span>
                             </div>
                         </div>
                         
